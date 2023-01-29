@@ -22,3 +22,5 @@ RUN set -e; \
 COPY src/ .
 
 VOLUME /tmp
+
+CMD ["bash"]
