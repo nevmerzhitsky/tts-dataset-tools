@@ -1,4 +1,4 @@
-# Prepare dataset for training a TTS/vocoder model
+# Prepare dataset for training a text-to-speech/vocoder model
 
 ## Audio files preparation
 
@@ -34,15 +34,3 @@ cd big-wavs-dir/
 ./silence_info.sh
 python ./split_by_silence.py
 ```
-
-## Metadata
-
-FILE FORMAT
-
-Metadata is provided in metadata.csv. This file consists of one record per
-line, delimited by the pipe character (0x7c). The fields are:
-
-1. ID: this is the name of the corresponding .wav file
-2. Transcription: words spoken by the reader (UTF-8)
-3. Normalized Transcription: transcription with numbers, ordinals, and monetary units expanded into
-   full words (UTF-8).
