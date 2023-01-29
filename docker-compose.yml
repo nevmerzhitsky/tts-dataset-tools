@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app:
+    build: .
+    init: true
+    shm_size: 1g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+              driver: nvidia
+              count: all
+    working_dir: /var/app/src
+    volumes:
+      - type: bind
+        source: ./src
+        target: /var/app/src/
