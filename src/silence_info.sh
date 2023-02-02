@@ -8,6 +8,7 @@ for f in *.wav; do
       > "$name-silence.txt"
   ffmpeg -hide_banner \
     -nostdin \
+    -nostats \
     -i "$f" \
     -af silencedetect=noise=-30dB:duration=0.4 \
     -f null - 2>&1 \

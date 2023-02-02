@@ -159,7 +159,7 @@ def convert_chunks_to_commands(name: str, chunks: list[Chunk]) -> list[str]:
 
         output_file_name = f'{file_name_prefix}_{n:04d}{name_suffix}.wav'
 
-        command = f'ffmpeg -hide_banner -hwaccel nvdec -nostdin -n' \
+        command = f'ffmpeg -hide_banner -hwaccel nvdec -nostdin -nostats -n' \
                   f' -ss {chunk.start:.4f}' \
                   f' -to {chunk.end:.4f}' \
                   f' -i {name}.wav' \
