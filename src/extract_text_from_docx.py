@@ -7,16 +7,14 @@ import docx2txt
 
 
 def main():
-    result: dict[str, list[str]] = {}
-
     for file_path in iglob(os.path.join(os.getcwd(), '*.docx')):
         name = file_path
         name = os.path.basename(name)
         print(f'Process {name}...')
-        result[name] = extract_text_from_docx_file(file_path)
+        text = extract_text_from_docx_file(file_path)
 
         with open(Path(file_path).with_suffix('.txt'), 'w') as fp:
-            fp.writelines(map(lambda x: f'{x}\n', result[name]))
+            fp.writelines(map(lambda x: f'{x}\n', text))
 
 
 def extract_text_from_docx_file(file_path: str) -> list[str]:
