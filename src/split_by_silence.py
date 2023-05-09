@@ -77,9 +77,10 @@ def convert_silence_periods_to_chunks(
     total_duration: float,
     min_duration: float,
     extended_duration: float = 0,
-) -> list[Chunk]:
+    skip_short_tail: bool = False,
+) -> Iterator[Chunk]:
     speech_periods = _convert_silence_periods_to_speech_periods(silence_periods, total_duration)
-    return _glue_chunks_to_minimum_length(speech_periods, min_duration, extended_duration)
+    return _glue_chunks_to_minimum_length(speech_periods, min_duration, extended_duration, skip_short_tail)
 
 
 def _convert_silence_periods_to_speech_periods(
@@ -110,15 +111,19 @@ def _glue_chunks_to_minimum_length(
     speech_periods: list[Chunk],
     min_duration: float,
     extended_duration: float = 0,
-) -> list[Chunk]:
-    result: list[Chunk] = []
-
+    skip_short_tail: bool = False,
+) -> Iterator[Chunk]:
     if len(speech_periods) == 0:
-        return result
+        return
 
     last_chunk_end = speech_periods[-1].end
 
-    prev_chunk_start = None
+    def build_chunk(chunk_start, chunk_end) -> Chunk:
+        extended_start = max(chunk_start - extended_duration, 0)
+        extended_end = min(chunk_end + extended_duration, last_chunk_end)
+        return Chunk(extended_start, extended_end)
+
+    chunk = prev_chunk_start = None
     for chunk in speech_periods:
         if prev_chunk_start is None:
             prev_chunk_start = chunk.start
@@ -126,16 +131,17 @@ def _glue_chunks_to_minimum_length(
         chunk_candidate_duration = chunk.end - prev_chunk_start
 
         if chunk_candidate_duration >= min_duration:
-            extended_start = max(prev_chunk_start - extended_duration, 0)
-            extended_end = min(chunk.end + extended_duration, last_chunk_end)
-            result.append(Chunk(extended_start, extended_end))
-
+            yield build_chunk(prev_chunk_start, chunk.end)
             prev_chunk_start = None
 
-    return result
+    if not skip_short_tail and chunk is not None and prev_chunk_start is not None:
+        chunk_candidate_duration = chunk.end - prev_chunk_start
+
+        if chunk_candidate_duration > 0:
+            yield build_chunk(prev_chunk_start, chunk.end)
 
 
-def convert_chunks_to_commands(name: str, chunks: list[Chunk]) -> Iterator[str]:
+def convert_chunks_to_commands(name: str, chunks: Iterator[Chunk]) -> Iterator[str]:
     """
     Inspired by https://stackoverflow.com/a/36077309/3155344
     """
