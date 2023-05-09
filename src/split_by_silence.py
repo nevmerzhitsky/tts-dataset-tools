@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from glob import iglob
 from itertools import pairwise
 from os import getcwd, path, system
+from typing import Iterator
 
 
 @dataclass(frozen=True)
@@ -25,14 +26,12 @@ class FileInfo:
 def main():
     silence_periods = load_silence_periods(getcwd())
     for name, file_info in silence_periods.items():
-        print(f'\n{name=}')
         chunks = convert_silence_periods_to_chunks(
             file_info.silence_periods,
             file_info.duration,
             10,
             0.20
         )
-        print(f'{chunks!r}')
         commands = convert_chunks_to_commands(name, chunks)
         [system(cmd) for cmd in commands]
 
@@ -40,9 +39,8 @@ def main():
 def load_silence_periods(dir_path: str, suffix: str = '-silence.txt') -> dict[str, FileInfo]:
     result: dict[str, FileInfo] = {}
 
-    for file_path in iglob(path.join(dir_path, f'*{suffix}')):
-        name = file_path
-        name = name[:-len(suffix)]
+    for file_path in sorted(iglob(path.join(dir_path, f'*{suffix}'))):
+        name = file_path[:-len(suffix)]
         result[name] = get_silence_periods_from_file(file_path)
 
     return result
@@ -137,12 +135,10 @@ def _glue_chunks_to_minimum_length(
     return result
 
 
-def convert_chunks_to_commands(name: str, chunks: list[Chunk]) -> list[str]:
+def convert_chunks_to_commands(name: str, chunks: list[Chunk]) -> Iterator[str]:
     """
     Inspired by https://stackoverflow.com/a/36077309/3155344
     """
-    result: list[str] = []
-
     source_dir = path.dirname(name)
     file_name_prefix = path.basename(name)
 
@@ -158,15 +154,16 @@ def convert_chunks_to_commands(name: str, chunks: list[Chunk]) -> list[str]:
             name_suffix = ""
 
         output_file_name = f'{file_name_prefix}_{n:04d}{name_suffix}.wav'
+        output_file_path = path.join(source_dir, "chunks", output_file_name)
 
-        command = f'ffmpeg -hide_banner -hwaccel nvdec -nostdin -nostats -n' \
-                  f' -ss {chunk.start:.4f}' \
-                  f' -to {chunk.end:.4f}' \
-                  f' -i {name}.wav' \
-                  f' {path.join(source_dir, "chunks", output_file_name)}'
-        result.append(command)
+        if path.isfile(output_file_path):
+            continue
 
-    return result
+        yield f'ffmpeg -hide_banner -hwaccel nvdec -nostdin -nostats -n' \
+              f' -ss {chunk.start:.4f}' \
+              f' -to {chunk.end:.4f}' \
+              f' -i {name}.wav' \
+              f' {output_file_path}'
 
 
 if __name__ == '__main__':
