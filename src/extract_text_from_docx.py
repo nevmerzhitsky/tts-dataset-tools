@@ -21,7 +21,7 @@ def extract_text_from_docx_file(file_path: str) -> list[str]:
     text = docx2txt.process(file_path)
     result = text.splitlines()
     result = map(lambda x: x.strip(), result)
-    result = map(lambda x: re.sub(r"[\xa0[:space:]]+", " ", x), result)
+    result = map(lambda x: re.sub(r"[\xa0\s]+", " ", x), result)
     result = filter(None, result)
 
     return list(result)
