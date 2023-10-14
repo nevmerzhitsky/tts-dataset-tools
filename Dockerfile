@@ -16,7 +16,7 @@ WORKDIR /var/app/src
 COPY src/Pipfile* ./
 
 RUN set -e; \
-    pipenv install --deploy --system; \
+    pipenv install -v --deploy --system; \
     pipenv --clear
 
 COPY src/ .
